@@ -1,4 +1,4 @@
-export default [
+const tokensFixture: { refreshToken: string; userLogin: string }[] = [
   {
     refreshToken: "token1",
     userLogin: "login1",
@@ -12,3 +12,5 @@ export default [
     userLogin: "login2",
   },
 ];
+
+export default tokensFixture;

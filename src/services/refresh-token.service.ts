@@ -1,5 +1,6 @@
 import { v4 } from "uuid";
-import { RefreshToken, User } from "../models/domain";
+import { User } from "../models/user";
+import { RefreshToken } from "../models/refresh-token";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
 import userService, { IUserService } from "./user.service";
 import refreshTokenMongoRepository from "../repositories/refresh-token-mongo.repository";
@@ -25,10 +26,7 @@ export class RefreshTokenService implements IRefreshTokenService {
     try {
       const user: User = await this.userService.find(login);
       const { refreshToken } = await this.repository.create(v4(), user.id);
-      return {
-        refreshToken,
-        userLogin: user.login,
-      };
+      return new RefreshToken(refreshToken, user.login);
     } catch (e) {
       throw new RefreshTokenCreateException();
     }

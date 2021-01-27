@@ -1,19 +1,19 @@
 import { IUserService, UserService } from "../../services/user.service";
-import repositoryMock, {
-  UserRepositoryMock,
-} from "../mocks/user-repository.mock";
+import { UserRepositoryMock } from "../mocks/user-repository.mock";
 import usersFixtures from "../fixtures/users";
 import { UserNotFoundException } from "../../exceptions/user-not-found.exception";
 import { CreateUserDto } from "../../dto/create-user-dto";
 import { UserCreateException } from "../../exceptions/user-create-exception";
-import { User } from "../../models/domain";
+import { User } from "../../models/user";
 
 let service: IUserService;
 let users: User[];
 
 describe("UserService", () => {
   beforeEach(() => {
-    users = [...usersFixtures];
+    users = usersFixtures.map(
+      ({ id, login, password }) => new User(id, login, password)
+    );
     service = new UserService(new UserRepositoryMock(users));
   });
 
@@ -24,7 +24,7 @@ describe("UserService", () => {
 
   it("should return one user by login", async () => {
     const loginToFind = "login1";
-    const actualUser = await service.find("login1");
+    const actualUser = await service.find(loginToFind);
     expect(actualUser).toEqual(
       users.find((user) => user.login === loginToFind)
     );

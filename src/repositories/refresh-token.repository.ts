@@ -1,4 +1,4 @@
-import { RefreshToken } from "../models/domain";
+import { RefreshToken } from "../models/refresh-token";
 
 export interface RefreshTokenRepository {
   find(token: string): Promise<RefreshToken | null>;

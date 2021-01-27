@@ -1,16 +1,12 @@
 import { UserRepository } from "../../repositories/user.repository";
-import { User } from "../../models/domain";
+import { User } from "../../models/user";
 import { v4 } from "uuid";
 import users from "../fixtures/users";
 
 export class UserRepositoryMock implements UserRepository {
   constructor(private users: User[]) {}
   async create(login: string, password: string): Promise<User> {
-    const user = {
-      id: v4(),
-      login,
-      password,
-    };
+    const user = new User(v4(), login, password);
     this.users.push(user);
     return Promise.resolve(user);
   }
@@ -25,5 +21,3 @@ export class UserRepositoryMock implements UserRepository {
     return Promise.resolve(this.users);
   }
 }
-
-export default new UserRepositoryMock(users);

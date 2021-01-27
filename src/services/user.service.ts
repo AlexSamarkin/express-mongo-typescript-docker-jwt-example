@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { User } from "../models/domain";
+import { User } from "../models/user";
 import { UserRepository } from "../repositories/user.repository";
 import userMongoRepository from "../repositories/user-mongo.repository";
 import { CreateUserDto } from "../dto/create-user-dto";

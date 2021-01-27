@@ -1,8 +1,7 @@
 import { IUserService } from "../../services/user.service";
-import userRepositoryMock from "./user-repository.mock";
 import { UserRepository } from "../../repositories/user.repository";
 import { CreateUserDto } from "../../dto/create-user-dto";
-import { User } from "../../models/domain";
+import { User } from "../../models/user";
 import { UserNotFoundException } from "../../exceptions/user-not-found.exception";
 
 export class UserServiceMock implements IUserService {
@@ -25,5 +24,3 @@ export class UserServiceMock implements IUserService {
     return user;
   }
 }
-
-export default new UserServiceMock(userRepositoryMock);

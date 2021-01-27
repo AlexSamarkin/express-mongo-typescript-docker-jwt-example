@@ -1,35 +1,46 @@
 import { RefreshTokenRepositoryMock } from "../mocks/refresh-token-repository.mock";
-import userServiceMock from "../mocks/user-service.mock";
+import { UserServiceMock } from "../mocks/user-service.mock";
+import { UserRepositoryMock } from "../mocks/user-repository.mock";
 import tokensFixture from "../fixtures/refresh-tokens";
 import {
   RefreshTokenService,
   IRefreshTokenService,
 } from "../../services/refresh-token.service";
 import { RefreshTokenNotFoundException } from "../../exceptions/refresh-token-not-found.exception";
-import { RefreshToken } from "../../models/domain";
+import { RefreshToken } from "../../models/refresh-token";
+import usersFixtures from "../fixtures/users";
+import { User } from "../../models/user";
 
 let service: IRefreshTokenService;
 let tokens: RefreshToken[];
+let users: User[];
 
 describe("RefreshTokenService", () => {
   beforeEach(() => {
-    tokens = [...tokensFixture];
+    tokens = tokensFixture.map(
+      ({ refreshToken, userLogin }) => new RefreshToken(refreshToken, userLogin)
+    );
+    users = usersFixtures.map(
+      ({ id, login, password }) => new User(id, login, password)
+    );
     service = new RefreshTokenService(
       new RefreshTokenRepositoryMock(tokens),
-      userServiceMock
+      new UserServiceMock(new UserRepositoryMock(users))
     );
   });
 
-  it("find - returns token", async () => {
+  it("should find and return token", async () => {
     const toFind = "token1";
     const actualToken = await service.find(toFind);
 
-    expect(actualToken).toEqual(
-      tokens.find(({ refreshToken }) => refreshToken === toFind)
-    );
+    const token: RefreshToken = tokens.find(
+      ({ refreshToken }) => refreshToken === toFind
+    ) as RefreshToken;
+
+    expect(actualToken.refreshToken).toBe(token.refreshToken);
   });
 
-  it("find - throws exception", async () => {
+  it("should throw exception while searching", async () => {
     const toFind = "tokenNotExists";
 
     service
@@ -58,9 +69,10 @@ describe("RefreshTokenService", () => {
   });
 
   it("should remove token and return true", async () => {
-    const actualResult = await service.remove("token1");
+    const tokenToFind = "token1";
+    const actualResult = await service.remove(tokenToFind);
     const actualTokens = tokens.filter(
-      ({ refreshToken }) => refreshToken !== "token1"
+      ({ refreshToken }) => refreshToken !== tokenToFind
     );
     const expectedTokens = await service.all();
     expect(actualResult).toBeTruthy();

@@ -1,5 +1,5 @@
 import { RefreshTokenRepository } from "./refresh-token.repository";
-import { RefreshToken } from "../models/domain";
+import { RefreshToken } from "../models/refresh-token";
 import { RefreshTokenModel } from "../models/mongo/refreshToken";
 
 export class RefreshTokenMongoRepository implements RefreshTokenRepository {
@@ -9,10 +9,7 @@ export class RefreshTokenMongoRepository implements RefreshTokenRepository {
       user: id,
     });
 
-    return {
-      refreshToken: result.refreshToken,
-      userLogin: result.user.login,
-    };
+    return new RefreshToken(result.refreshToken, result.user.login);
   }
 
   async find(token: string): Promise<RefreshToken | null> {
@@ -26,10 +23,7 @@ export class RefreshTokenMongoRepository implements RefreshTokenRepository {
       return null;
     }
 
-    return {
-      refreshToken: result.refreshToken,
-      userLogin: result.user.login,
-    };
+    return new RefreshToken(result.refreshToken, result.user.login);
   }
 
   async findOneAndRemove(refreshToken: string): Promise<void> {
@@ -45,22 +39,16 @@ export class RefreshTokenMongoRepository implements RefreshTokenRepository {
     const collection = await RefreshTokenModel.find({ user: userId })
       .populate("user")
       .exec();
-    return collection.map(({ refreshToken, user }) => {
-      return {
-        refreshToken,
-        userLogin: user.login,
-      };
-    });
+    return collection.map(
+      ({ refreshToken, user }) => new RefreshToken(refreshToken, user.login)
+    );
   }
 
   async all(): Promise<RefreshToken[]> {
     const collection = await RefreshTokenModel.find().populate("user").exec();
-    return collection.map(({ refreshToken, user }) => {
-      return {
-        refreshToken,
-        userLogin: user.login,
-      };
-    });
+    return collection.map(
+      ({ refreshToken, user }) => new RefreshToken(refreshToken, user.login)
+    );
   }
 }
 

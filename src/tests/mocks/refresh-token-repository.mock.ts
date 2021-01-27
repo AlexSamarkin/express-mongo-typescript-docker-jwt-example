@@ -1,6 +1,5 @@
 import { RefreshTokenRepository } from "../../repositories/refresh-token.repository";
-import { RefreshToken } from "../../models/domain";
-import tokens from "../fixtures/refresh-tokens";
+import { RefreshToken } from "../../models/refresh-token";
 import users from "../fixtures/users";
 
 export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
@@ -14,18 +13,21 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     if (!user) {
       throw new Error();
     }
-    const token = {
-      userLogin: user.login,
-      refreshToken,
-    };
+    const token = new RefreshToken(refreshToken, user.login);
 
-    tokens.push(token);
+    this.tokens.push(token);
     return Promise.resolve(token);
   }
 
   async find(token: string): Promise<RefreshToken | null> {
-    const found = tokens.find(({ refreshToken }) => refreshToken === token);
-    return Promise.resolve(found || null);
+    const found = this.tokens.find(
+      (refreshToken) => refreshToken.refreshToken === token
+    );
+    if (!found) {
+      return Promise.resolve(null);
+    }
+
+    return Promise.resolve(found);
   }
 
   async findByUser(userId: string): Promise<RefreshToken[]> {
@@ -33,7 +35,8 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     if (!user) {
       throw new Error();
     }
-    const found = tokens.filter(({ userLogin }) => userLogin === user.login);
+    const found = this.tokens.filter((token) => token.userLogin === user.login);
+
     return Promise.resolve(found);
   }
 
@@ -49,5 +52,3 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     return Promise.resolve(true);
   }
 }
-
-export default new RefreshTokenRepositoryMock(tokens);
