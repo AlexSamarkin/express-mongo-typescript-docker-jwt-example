@@ -1,30 +1,37 @@
 import { v4 } from "uuid";
 import { RefreshToken, User } from "../models/domain";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
-import userService, { IUserService } from "./user";
+import userService, { IUserService } from "./user.service";
 import refreshTokenMongoRepository from "../repositories/refresh-token-mongo.repository";
+import { RefreshTokenNotFoundException } from "../exceptions/refresh-token-not-found.exception";
+import { RefreshTokenCreateException } from "../exceptions/refresh-token-create.exception";
 
 export interface IRefreshTokenService {
   find(refreshToken: string): Promise<RefreshToken>;
   findByUser(login: string): Promise<RefreshToken[]>;
-  create(login: string, password: string): Promise<RefreshToken>;
-  removeByUser(login: string): Promise<boolean>;
+  create(login: string): Promise<RefreshToken>;
+  removeByUser(login: string): Promise<void>;
   remove(refreshToken: string): Promise<boolean>;
+  all(): Promise<RefreshToken[]>;
 }
 
-class RefreshTokenService implements IRefreshTokenService {
+export class RefreshTokenService implements IRefreshTokenService {
   constructor(
     private readonly repository: RefreshTokenRepository,
     private readonly userService: IUserService
   ) {}
 
   async create(login: string): Promise<RefreshToken> {
-    const user: User = await this.userService.find(login);
-    const { refreshToken } = await this.repository.create(v4(), user.id);
-    return {
-      refreshToken,
-      userLogin: user.login,
-    };
+    try {
+      const user: User = await this.userService.find(login);
+      const { refreshToken } = await this.repository.create(v4(), user.id);
+      return {
+        refreshToken,
+        userLogin: user.login,
+      };
+    } catch (e) {
+      throw new RefreshTokenCreateException();
+    }
   }
 
   async remove(refreshToken: string): Promise<boolean> {
@@ -36,34 +43,34 @@ class RefreshTokenService implements IRefreshTokenService {
     }
   }
 
-  async removeByUser(login: string): Promise<boolean> {
+  async removeByUser(login: string): Promise<void> {
     try {
       const user = await this.userService.find(login);
-      if (!user) {
-        return false;
-      }
       await this.repository.removeByUser(user.id);
-      return true;
     } catch (e) {
-      return false;
+      return;
     }
   }
 
   async find(refreshToken: string): Promise<RefreshToken> {
     const result = await this.repository.find(refreshToken);
     if (!result) {
-      throw new Error("Token not found");
+      throw new RefreshTokenNotFoundException();
     }
     return result;
   }
 
   async findByUser(login: string): Promise<RefreshToken[]> {
-    const user = await this.userService.find(login);
-    if (!user) {
-      throw new Error("No user found");
+    try {
+      const user = await this.userService.find(login);
+      return await this.repository.findByUser(user.id);
+    } catch (e) {
+      return [];
     }
+  }
 
-    return await this.repository.findByUser(user.id);
+  async all(): Promise<RefreshToken[]> {
+    return await this.repository.all();
   }
 }
 

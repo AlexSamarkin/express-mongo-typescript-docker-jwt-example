@@ -2,8 +2,8 @@ import { Request, Response, Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import jwtMiddleware from "express-jwt";
-import userService from "../services/user";
-import refreshTokenService from "../services/refreshToken";
+import userService from "../services/user.service";
+import refreshTokenService from "../services/refresh-token.service";
 import config from "../config";
 
 const authRouter = Router();

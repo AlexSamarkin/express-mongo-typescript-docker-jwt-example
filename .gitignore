@@ -2,3 +2,5 @@ node_modules
 build
 docker/.env
 .idea
+.DS_Store
+coverage
