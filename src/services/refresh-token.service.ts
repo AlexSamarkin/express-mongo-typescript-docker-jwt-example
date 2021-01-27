@@ -1,8 +1,8 @@
 import { v4 } from "uuid";
-import { RefreshTokenModel } from "../models/refreshToken";
-import { Model } from "mongoose";
-import { RefreshToken } from "../models/types";
-import { UserModel } from "../models/user";
+import { RefreshToken, User } from "../models/domain";
+import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
+import userService, { IUserService } from "./user";
+import refreshTokenMongoRepository from "../repositories/refresh-token-mongo.repository";
 
 export interface IRefreshTokenService {
   find(refreshToken: string): Promise<RefreshToken>;
@@ -14,16 +14,13 @@ export interface IRefreshTokenService {
 
 class RefreshTokenService implements IRefreshTokenService {
   constructor(
-    private readonly repository: Model<any>,
-    private readonly userRepository: Model<any>
+    private readonly repository: RefreshTokenRepository,
+    private readonly userService: IUserService
   ) {}
 
   async create(login: string): Promise<RefreshToken> {
-    const user = await this.userRepository.findOne({ login });
-    const { refreshToken } = await this.repository.create({
-      refreshToken: v4(),
-      user,
-    });
+    const user: User = await this.userService.find(login);
+    const { refreshToken } = await this.repository.create(v4(), user.id);
     return {
       refreshToken,
       userLogin: user.login,
@@ -32,7 +29,7 @@ class RefreshTokenService implements IRefreshTokenService {
 
   async remove(refreshToken: string): Promise<boolean> {
     try {
-      await this.repository.findOneAndRemove({ refreshToken });
+      await this.repository.findOneAndRemove(refreshToken);
       return true;
     } catch (e) {
       return false;
@@ -41,11 +38,11 @@ class RefreshTokenService implements IRefreshTokenService {
 
   async removeByUser(login: string): Promise<boolean> {
     try {
-      const user = await this.userRepository.find({ login });
+      const user = await this.userService.find(login);
       if (!user) {
         return false;
       }
-      await this.repository.deleteMany({ user });
+      await this.repository.removeByUser(user.id);
       return true;
     } catch (e) {
       return false;
@@ -53,30 +50,24 @@ class RefreshTokenService implements IRefreshTokenService {
   }
 
   async find(refreshToken: string): Promise<RefreshToken> {
-    const result = await this.repository.findOne({ refreshToken });
+    const result = await this.repository.find(refreshToken);
     if (!result) {
       throw new Error("Token not found");
     }
-    return {
-      refreshToken: result.refreshToken,
-      userLogin: result.user.login,
-    };
+    return result;
   }
 
   async findByUser(login: string): Promise<RefreshToken[]> {
-    const user = await this.userRepository.find({ login });
+    const user = await this.userService.find(login);
     if (!user) {
       throw new Error("No user found");
     }
 
-    const result = await this.repository.find({ user });
-    return result.map(({ refreshToken, user }) => {
-      return {
-        refreshToken,
-        userLogin: user.login,
-      };
-    });
+    return await this.repository.findByUser(user.id);
   }
 }
 
-export default new RefreshTokenService(RefreshTokenModel, UserModel);
+export default new RefreshTokenService(
+  refreshTokenMongoRepository,
+  userService
+);

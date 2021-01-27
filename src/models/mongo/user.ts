@@ -1,6 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { Document } from "mongoose";
 
 const { Schema } = mongoose;
+
+export interface UserDocument extends Document {
+  login: string;
+  password: string;
+}
 
 export const UserSchema = new Schema(
   {
@@ -17,4 +22,4 @@ export const UserSchema = new Schema(
   { versionKey: false }
 );
 
-export const UserModel = mongoose.model("User", UserSchema);
+export const UserModel = mongoose.model<UserDocument>("User", UserSchema);
