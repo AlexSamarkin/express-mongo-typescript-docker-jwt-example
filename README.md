@@ -1,6 +1,6 @@
 # Express.js + Mongo + Docker + TypeScript JWT Auth Example
 
-###Install
+##Install
 
 - Clone the repo
 - Install Docker and Docker-compose
