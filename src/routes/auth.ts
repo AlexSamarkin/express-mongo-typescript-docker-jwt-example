@@ -5,6 +5,7 @@ import jwtMiddleware from "express-jwt";
 import userService from "../services/user.service";
 import refreshTokenService from "../services/refresh-token.service";
 import config from "../config";
+import { CreateUserDto } from "../dto/create-user-dto";
 
 const authRouter = Router();
 
@@ -47,6 +48,21 @@ authRouter.post("/refresh", async (req: Request, res: Response) => {
     });
   } catch (e) {
     res.status(403).end();
+  }
+});
+
+authRouter.post("/register", async (req: Request, res: Response) => {
+  const { login, password } = req.body;
+  if (!login || !password) {
+    res.status(403).end();
+  }
+
+  try {
+    const dto = new CreateUserDto(login, password);
+    const user = await userService.create(dto);
+    res.send({ status: "success", user });
+  } catch (e) {
+    res.send({ status: "error", message: "Unable to create user" });
   }
 });
 
