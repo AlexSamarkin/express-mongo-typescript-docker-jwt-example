@@ -33,9 +33,25 @@ describe("UserService", () => {
     expect(actualUser).toEqual(expectedUser);
   });
 
-  it("should throw error - user not found", () => {
+  it("should return one user by email", async () => {
+    const emailToFind = new Email("login1@google.com");
+    const actualUser = await service.findByEmail(emailToFind);
+    const expectedUser = users.find(
+      (user) => user.email.value === emailToFind.value
+    );
+    expect(actualUser).toEqual(expectedUser);
+  });
+
+  it("should throw error - user by login not found", () => {
     const loginToFind = new Login("loginNotExists");
     service.find(loginToFind).catch((e) => expect(e).toBeInstanceOf(Error));
+  });
+
+  it("should throw error - user by email  not found", () => {
+    const emailToFind = new Email("email@notexists.com");
+    service
+      .findByEmail(emailToFind)
+      .catch((e) => expect(e).toBeInstanceOf(Error));
   });
 
   it("should create user and return it", async () => {

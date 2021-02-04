@@ -4,7 +4,7 @@ const DEFAULT_JWT_SECRET = "default_jwt_secret";
 
 const conf = {
   port: 3000,
-  jwtSecret: process.env.JWT_SECRET_KEY,
+  jwtSecret: process.env.JWT_SECRET_KEY ?? DEFAULT_JWT_SECRET,
   jwtExpiresIn: 5 * 60,
   jwtAlgorithm: "HS256",
   mongo: {
@@ -14,7 +14,7 @@ const conf = {
     user: process.env.MONGO_USERNAME,
     password: process.env.MONGO_PASSWORD,
   },
-  env: process.env.NODE_ENV ?? DEFAULT_JWT_SECRET,
+  env: process.env.NODE_ENV,
 };
 
 export default rc("express-jwt-example", conf);
