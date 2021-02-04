@@ -29,6 +29,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 
   if (!user || !isPasswordMatch) {
     res.status(401).end();
+    return;
   }
 
   const token = await jwt.sign(
@@ -74,12 +75,19 @@ authRouter.post("/register", async (req: Request, res: Response) => {
   const { login, email, password } = req.body;
   if (!login || !password || !email) {
     res.status(403).end();
+    return;
   }
 
   try {
     const dto = new CreateUserDto(login, email, password);
     const user = await userService.create(dto);
-    res.send({ status: "success", user });
+    res.send({
+      status: "success",
+      user: {
+        login: user.login.value,
+        email: user.email.value,
+      },
+    });
   } catch (e) {
     res.send({ status: "error", message: "Unable to create user" });
   }

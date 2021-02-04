@@ -10,23 +10,20 @@ import { RefreshTokenRepository } from "../repositories/refresh-token.repository
 import config from "../config";
 import { UserMongoRepository } from "../repositories/user-mongo.repository";
 import { RefreshTokenMongoRepository } from "../repositories/refresh-token-mongo.repository";
+import { isTest } from "../utils";
+import { UserTestRepository } from "../tests/app/repositories/user-test.repository";
+import { RefreshTokenTestRepository } from "../tests/app/repositories/refresh-token-test.repository";
 
-const UserRepositoryImplementation =
-  config.env === "production" || config.env === "development"
-    ? UserMongoRepository
-    : UserMongoRepository;
-const RefreshTokenRepositoryImplementation =
-  config.env === "production" || config.env === "development"
-    ? RefreshTokenMongoRepository
-    : RefreshTokenMongoRepository;
+const UserRepositoryImplementation = isTest(config.env)
+  ? UserTestRepository
+  : UserMongoRepository;
 
-const UserServiceImplementation =
-  config.env === "production" || config.env === "development"
-    ? UserService
-    : UserService;
+const RefreshTokenRepositoryImplementation = isTest(config.env)
+  ? RefreshTokenTestRepository
+  : RefreshTokenMongoRepository;
 
 const diContainer = new Container();
-diContainer.bind<IUserService>(TYPES.UserService).to(UserServiceImplementation);
+diContainer.bind<IUserService>(TYPES.UserService).to(UserService);
 diContainer
   .bind<UserRepository>(TYPES.UserRepository)
   .to(UserRepositoryImplementation);

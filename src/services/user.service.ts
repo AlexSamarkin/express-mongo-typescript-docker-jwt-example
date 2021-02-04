@@ -53,7 +53,6 @@ export class UserService implements IUserService {
         bcrypt.hashSync(createUser.password)
       );
     } catch (e) {
-      console.log(e);
       throw new UserCreateException();
     }
   }
