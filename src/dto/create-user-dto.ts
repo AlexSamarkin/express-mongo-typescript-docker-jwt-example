@@ -1,6 +1,7 @@
 export class CreateUserDto {
   constructor(
     private readonly _login: string,
+    private readonly _email: string,
     private readonly _password: string
   ) {}
 
@@ -10,5 +11,9 @@ export class CreateUserDto {
 
   get password(): string {
     return this._password;
+  }
+
+  get email(): string {
+    return this._email;
   }
 }

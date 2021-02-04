@@ -1,11 +1,14 @@
+import "reflect-metadata";
 import { v4 } from "uuid";
 import { User } from "../models/user";
 import { RefreshToken } from "../models/refresh-token";
 import { RefreshTokenRepository } from "../repositories/refresh-token.repository";
-import userService, { IUserService } from "./user.service";
-import refreshTokenMongoRepository from "../repositories/refresh-token-mongo.repository";
+import { IUserService } from "./user.service";
 import { RefreshTokenNotFoundException } from "../exceptions/refresh-token-not-found.exception";
 import { RefreshTokenCreateException } from "../exceptions/refresh-token-create.exception";
+import { inject, injectable } from "inversify";
+import { TYPES } from "../di/types";
+import { Login } from "../value-objects/login";
 
 export interface IRefreshTokenService {
   find(refreshToken: string): Promise<RefreshToken>;
@@ -16,17 +19,20 @@ export interface IRefreshTokenService {
   all(): Promise<RefreshToken[]>;
 }
 
+@injectable()
 export class RefreshTokenService implements IRefreshTokenService {
   constructor(
+    @inject(TYPES.RefreshTokenRepository)
     private readonly repository: RefreshTokenRepository,
+    @inject(TYPES.UserService)
     private readonly userService: IUserService
   ) {}
 
   async create(login: string): Promise<RefreshToken> {
     try {
-      const user: User = await this.userService.find(login);
+      const user: User = await this.userService.find(new Login(login));
       const { refreshToken } = await this.repository.create(v4(), user.id);
-      return new RefreshToken(refreshToken, user.login);
+      return new RefreshToken(refreshToken, user.id);
     } catch (e) {
       throw new RefreshTokenCreateException();
     }
@@ -43,7 +49,7 @@ export class RefreshTokenService implements IRefreshTokenService {
 
   async removeByUser(login: string): Promise<void> {
     try {
-      const user = await this.userService.find(login);
+      const user = await this.userService.find(new Login(login));
       await this.repository.removeByUser(user.id);
     } catch (e) {
       return;
@@ -60,7 +66,7 @@ export class RefreshTokenService implements IRefreshTokenService {
 
   async findByUser(login: string): Promise<RefreshToken[]> {
     try {
-      const user = await this.userService.find(login);
+      const user = await this.userService.find(new Login(login));
       return await this.repository.findByUser(user.id);
     } catch (e) {
       return [];
@@ -71,8 +77,3 @@ export class RefreshTokenService implements IRefreshTokenService {
     return await this.repository.all();
   }
 }
-
-export default new RefreshTokenService(
-  refreshTokenMongoRepository,
-  userService
-);

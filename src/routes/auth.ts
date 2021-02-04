@@ -1,28 +1,47 @@
+import "reflect-metadata";
 import { Request, Response, Router } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import jwtMiddleware from "express-jwt";
-import userService from "../services/user.service";
-import refreshTokenService from "../services/refresh-token.service";
 import config from "../config";
 import { CreateUserDto } from "../dto/create-user-dto";
+import { diContainer } from "../di/container";
+import { TYPES } from "../di/types";
+import { IUserService } from "../services/user.service";
+import { IRefreshTokenService } from "../services/refresh-token.service";
+import { Login } from "../value-objects/login";
 
 const authRouter = Router();
+
+const userService: IUserService = diContainer.get<IUserService>(
+  TYPES.UserService
+);
+
+const refreshTokenService: IRefreshTokenService = diContainer.get<IRefreshTokenService>(
+  TYPES.RefreshTokenService
+);
 
 authRouter.post("/login", async (req: Request, res: Response) => {
   const { login, password } = req.body;
 
-  const user = await userService.find(login);
+  const user = await userService.find(new Login(login));
   const isPasswordMatch = await bcrypt.compare(password, user.password);
 
   if (!user || !isPasswordMatch) {
     res.status(401).end();
   }
 
-  const token = await jwt.sign({ login }, config.jwtSecret, {
-    expiresIn: config.jwtExpiresIn,
-    algorithm: config.jwtAlgorithm,
-  });
+  const token = await jwt.sign(
+    {
+      login: user.login.value,
+      email: user.email.value,
+    },
+    config.jwtSecret,
+    {
+      expiresIn: config.jwtExpiresIn,
+      algorithm: config.jwtAlgorithm,
+    }
+  );
   const { refreshToken } = await refreshTokenService.create(login);
 
   res.send({
@@ -52,13 +71,13 @@ authRouter.post("/refresh", async (req: Request, res: Response) => {
 });
 
 authRouter.post("/register", async (req: Request, res: Response) => {
-  const { login, password } = req.body;
-  if (!login || !password) {
+  const { login, email, password } = req.body;
+  if (!login || !password || !email) {
     res.status(403).end();
   }
 
   try {
-    const dto = new CreateUserDto(login, password);
+    const dto = new CreateUserDto(login, email, password);
     const user = await userService.create(dto);
     res.send({ status: "success", user });
   } catch (e) {

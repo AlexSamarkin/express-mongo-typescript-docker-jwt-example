@@ -1,15 +1,15 @@
-const tokensFixture: { refreshToken: string; userLogin: string }[] = [
+const tokensFixture: { refreshToken: string; userId: string }[] = [
   {
     refreshToken: "token1",
-    userLogin: "login1",
+    userId: "id1",
   },
   {
     refreshToken: "token2",
-    userLogin: "login1",
+    userId: "id1",
   },
   {
     refreshToken: "token3",
-    userLogin: "login2",
+    userId: "id2",
   },
 ];
 

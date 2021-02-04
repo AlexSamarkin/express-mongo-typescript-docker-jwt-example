@@ -6,10 +6,11 @@ import {
   RefreshTokenService,
   IRefreshTokenService,
 } from "../../services/refresh-token.service";
-import { RefreshTokenNotFoundException } from "../../exceptions/refresh-token-not-found.exception";
 import { RefreshToken } from "../../models/refresh-token";
 import usersFixtures from "../fixtures/users";
 import { User } from "../../models/user";
+import { Login } from "../../value-objects/login";
+import { Email } from "../../value-objects/email";
 
 let service: IRefreshTokenService;
 let tokens: RefreshToken[];
@@ -18,10 +19,11 @@ let users: User[];
 describe("RefreshTokenService", () => {
   beforeEach(() => {
     tokens = tokensFixture.map(
-      ({ refreshToken, userLogin }) => new RefreshToken(refreshToken, userLogin)
+      ({ refreshToken, userId }) => new RefreshToken(refreshToken, userId)
     );
     users = usersFixtures.map(
-      ({ id, login, password }) => new User(id, login, password)
+      ({ id, login, email, password }) =>
+        new User(id, new Login(login), new Email(email), password)
     );
     service = new RefreshTokenService(
       new RefreshTokenRepositoryMock(tokens),
@@ -43,17 +45,17 @@ describe("RefreshTokenService", () => {
   it("should throw exception while searching", async () => {
     const toFind = "tokenNotExists";
 
-    service
-      .find(toFind)
-      .catch((e) => expect(e).toBeInstanceOf(RefreshTokenNotFoundException));
+    service.find(toFind).catch((e) => expect(e).toBeInstanceOf(Error));
   });
 
   it("should return tokens of user", async () => {
-    const login = "login1";
+    const loginToFind = "login1";
 
-    const actualResult = await service.findByUser(login);
+    const user = users.find(({ login }) => login.value === loginToFind) as User;
 
-    const expected = tokens.filter(({ userLogin }) => userLogin === login);
+    const actualResult = await service.findByUser(loginToFind);
+
+    const expected = tokens.filter(({ userId }) => userId === user.id);
 
     expect(actualResult).toEqual(expected);
   });

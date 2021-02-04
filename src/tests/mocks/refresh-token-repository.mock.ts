@@ -13,7 +13,7 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     if (!user) {
       throw new Error();
     }
-    const token = new RefreshToken(refreshToken, user.login);
+    const token = new RefreshToken(refreshToken, user.id);
 
     this.tokens.push(token);
     return Promise.resolve(token);
@@ -35,7 +35,7 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     if (!user) {
       throw new Error();
     }
-    const found = this.tokens.filter((token) => token.userLogin === user.login);
+    const found = this.tokens.filter((token) => token.userId === user.id);
 
     return Promise.resolve(found);
   }
@@ -47,8 +47,8 @@ export class RefreshTokenRepositoryMock implements RefreshTokenRepository {
     return Promise.resolve();
   }
 
-  async removeByUser(login: string): Promise<boolean> {
-    this.tokens = this.tokens.filter((token) => token.userLogin !== login);
+  async removeByUser(userId: string): Promise<boolean> {
+    this.tokens = this.tokens.filter((token) => token.userId !== userId);
     return Promise.resolve(true);
   }
 }

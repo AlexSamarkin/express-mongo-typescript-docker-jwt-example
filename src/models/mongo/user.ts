@@ -5,6 +5,7 @@ const { Schema } = mongoose;
 export interface UserDocument extends Document {
   login: string;
   password: string;
+  email: string;
 }
 
 export const UserSchema = new Schema(
@@ -17,6 +18,11 @@ export const UserSchema = new Schema(
     password: {
       type: String,
       required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
     },
   },
   { versionKey: false }

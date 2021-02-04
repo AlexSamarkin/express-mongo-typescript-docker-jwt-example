@@ -1,10 +1,11 @@
 import { IUserService, UserService } from "../../services/user.service";
 import { UserRepositoryMock } from "../mocks/user-repository.mock";
 import usersFixtures from "../fixtures/users";
-import { UserNotFoundException } from "../../exceptions/user-not-found.exception";
 import { CreateUserDto } from "../../dto/create-user-dto";
 import { UserCreateException } from "../../exceptions/user-create-exception";
 import { User } from "../../models/user";
+import { Login } from "../../value-objects/login";
+import { Email } from "../../value-objects/email";
 
 let service: IUserService;
 let users: User[];
@@ -12,7 +13,8 @@ let users: User[];
 describe("UserService", () => {
   beforeEach(() => {
     users = usersFixtures.map(
-      ({ id, login, password }) => new User(id, login, password)
+      ({ id, login, email, password }) =>
+        new User(id, new Login(login), new Email(email), password)
     );
     service = new UserService(new UserRepositoryMock(users));
   });
@@ -23,30 +25,37 @@ describe("UserService", () => {
   });
 
   it("should return one user by login", async () => {
-    const loginToFind = "login1";
+    const loginToFind = new Login("login1");
     const actualUser = await service.find(loginToFind);
-    expect(actualUser).toEqual(
-      users.find((user) => user.login === loginToFind)
+    const expectedUser = users.find(
+      (user) => user.login.value === loginToFind.value
     );
+    expect(actualUser).toEqual(expectedUser);
   });
 
   it("should throw error - user not found", () => {
-    const loginToFind = "loginNotExists";
-    service
-      .find(loginToFind)
-      .catch((e) => expect(e).toBeInstanceOf(UserNotFoundException));
+    const loginToFind = new Login("loginNotExists");
+    service.find(loginToFind).catch((e) => expect(e).toBeInstanceOf(Error));
   });
 
   it("should create user and return it", async () => {
-    const dto = new CreateUserDto("some-login", "some-password");
+    const dto = new CreateUserDto(
+      "some-login",
+      "some-email@email.com",
+      "some-password"
+    );
     const user = await service.create(dto);
-    const userFromDB = users.find((user) => user.login === dto.login);
+    const userFromDB = users.find((user) => user.login.value === dto.login);
 
     expect(user).toEqual(userFromDB);
   });
 
   it("should throw error while trying to create existing user", () => {
-    const dto = new CreateUserDto("login1", "some-password");
+    const dto = new CreateUserDto(
+      "login1",
+      "login1@gmail.com",
+      "some-password"
+    );
     service
       .create(dto)
       .catch((e) => expect(e).toBeInstanceOf(UserCreateException));

@@ -1,17 +1,27 @@
+import "reflect-metadata";
 import { Request, Response, Router } from "express";
 import jwtMiddleware from "express-jwt";
-import userService from "../services/user.service";
 import config from "../config";
 import { CreateUserDto } from "../dto/create-user-dto";
 import jwt from "jsonwebtoken";
+import { diContainer } from "../di/container";
+import { IUserService } from "../services/user.service";
+import { TYPES } from "../di/types";
+import { Login } from "../value-objects/login";
+
+const userService: IUserService = diContainer.get<IUserService>(
+  TYPES.UserService
+);
 
 const userRouter = Router();
 
 userRouter.post("/create", async (req: Request, res: Response) => {
-  const { login, password } = req.body;
-  const createUser = new CreateUserDto(login, password);
+  const { login, email, password } = req.body;
+  const createUser = new CreateUserDto(login, email, password);
   const result = await userService.create(createUser);
-  res.send({ result });
+  res.send({
+    result: { login: result.login.value, email: result.email.value },
+  });
 });
 
 userRouter.get(
@@ -22,7 +32,11 @@ userRouter.get(
   }),
   async (req: Request, res: Response) => {
     const users = await userService.all();
-    res.send({ users });
+    const responseUsers = users.map((user) => ({
+      login: user.login.value,
+      email: user.email.value,
+    }));
+    res.send({ users: responseUsers });
   }
 );
 
@@ -35,8 +49,8 @@ userRouter.get(
   async (req: Request, res: Response) => {
     const token = req.headers["authorization"]?.split(" ")[1];
     const { login } = <{ login: string }>jwt.decode(<string>token);
-    const user = await userService.find(login);
-    res.send({ me: user });
+    const user = await userService.find(new Login(login));
+    res.send({ me: { login: user.login.value, email: user.email.value } });
   }
 );
 
